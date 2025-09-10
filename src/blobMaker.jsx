@@ -112,6 +112,8 @@ export default function BlobMaker() {
     const uri = ref.current.toDataURL();
     downloadURI(uri, 'blob.png')
   }
+
+  const [strokeColor, setStrokeColor] = useState("#ffffff")
   return (
     <>
       <div className="">
@@ -132,13 +134,15 @@ export default function BlobMaker() {
             <input type="number" id="stroke" value={strokeWidth}
             onChange={(e)=>setStrokeWidth(e.target.value)}
             />
+            <input type="color" name="" id="strokeColor" value={strokeColor} onChange={(e)=>setStrokeColor(e.target.value)}/>
         </div>
-        <div className="stroke">
+        <div className="tension">
             <label htmlFor="tension">Tension</label>
             <input type="number" id="tension" value={tension}
             onChange={(e)=>setTension(e.target.value)} 
             step={"0.1"}
             />
+            
         </div>
 
       </div>
@@ -148,7 +152,7 @@ export default function BlobMaker() {
           <Line ref={ref}
             points={pointPosition}
             fill="#00D2FF"
-            stroke="black"
+            stroke={strokeColor}
             strokeWidth={strokeWidth}
             closed
             onDragMove={(e) => {
