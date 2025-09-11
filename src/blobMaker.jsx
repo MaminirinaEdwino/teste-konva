@@ -1,4 +1,7 @@
+import Konva from "konva";
+import { Potrace } from "potrace";
 import { useEffect, useRef, useState } from "react";
+import { renderToString } from "react-dom/server";
 import { Circle, Layer, Line, Stage } from "react-konva";
 import { exportStageSVG } from "react-konva-to-svg";
 const Point = ({ position, key, id, changePosition }) => {
@@ -37,6 +40,48 @@ function downloadURI(uri, name) {
   link.click();
   document.body.removeChild(link);
 }
+
+const handleDownload = async (ref) => {
+  const stage = ref.current;
+  if (ref.current != null) {
+    // let test = stage.toCanvas();
+    // console.log(test)
+    // const svgString = new XMLSerializer().serializeToString(test);
+    // console.log(svgString)
+    
+    // console.log(svgString);
+    const line = stage.find("#blob")[0];
+
+    const tempStage = new Konva.Stage({
+      container: document.createElement("div"), // Conteneur factice
+    
+    });
+
+    const tempLayer = new Konva.Layer();
+    tempStage.add(tempLayer);
+
+    // 3. Cloner l'élément et l'ajouter à la couche temporaire
+    // On le translate pour qu'il soit à (0,0) dans le nouveau Stage
+    const clonedRect = line.clone();
+    clonedRect.x(0);
+    clonedRect.y(0);
+    tempLayer.add(clonedRect);
+
+    // Mettre à jour la couche pour l'affichage interne
+    tempLayer.draw();
+    // console.log(svgString)
+    const svgString = await exportStageSVG(tempStage);
+    const blob = new Blob([svgString], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "my-component.svg";
+    a.click();
+    URL.revokeObjectURL(url);
+  } else {
+    alert("ref null");
+  }
+};
 export default function BlobMaker() {
   // [23, 20, 23, 160, 70, 93, 150, 109, 290, 139, 270, 93]
 
@@ -102,7 +147,7 @@ export default function BlobMaker() {
     (e) => {
       setPoints(listePosition.slice(0, nbrPoint));
       setPointPosition(PositionTotal.slice(0, nbrPoint * 2));
-      console.log(pointPosition);
+      // console.log(pointPosition);
       setPositionTotal([
         position.x,
         position.y,
@@ -142,11 +187,13 @@ export default function BlobMaker() {
   );
   const handleExport = (e) => {
     const uri = ref.current.toDataURL();
-    downloadURI(uri, "blob.png");
+    // downloadURI(uri, "blob.png");
+    handleDownload(ref);
   };
   const [colorFill, setColorFill] = useState("#eeeeee");
 
   const [strokeColor, setStrokeColor] = useState("#ffffff");
+
   return (
     <>
       <div className="btn">
@@ -201,10 +248,10 @@ export default function BlobMaker() {
         </div>
       </div>
       <button onClick={handleExport}>Export</button>
-      <Stage width={window.innerWidth} height={window.innerHeight}>
+      <Stage ref={ref} width={window.innerWidth} height={window.innerHeight}>
         <Layer>
           <Line
-            ref={ref}
+            id="blob"
             points={pointPosition}
             fill={colorFill}
             stroke={strokeColor}
